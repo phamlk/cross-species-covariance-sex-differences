@@ -1,0 +1,14 @@
+Based on the following atlases:
+* Dorr et.al., 2008, High resolution three-dimensional brain atlas using an average magnetic resonance image of 40 adult C57Bl/6J mice.
+* Steadman et.al., 2014, Genetic effects on cerebellar structure across mouse models of autism using a magnetic resonance imaging atlas.
+* Ullmann et.al., 2013, A segmentation protocol and MRI atlas of the C57BL/6J mouse neocortex.
+* Richards et.al, 2011, Segmentation of the mouse hippocampal formation in magnetic resonance images.
+* Shannon Egan (2015) – added olfactory bulb segmentation based on data from the Allen Brain Institute 
+* Lily Qiu (2016) – added the medial amygdala and medial preoptic area
+
+Compared to DSURE
+=================
+* added Medial amygdala (segmentated by Lily)
+* added Medial preoptic nucleus (segmented by Lily)
+--> these labels were mapped from the Dorr_2008 average (which was used for the segmentation) onto the 
+    40 micron average. The segmentation should be cleaned up at some point

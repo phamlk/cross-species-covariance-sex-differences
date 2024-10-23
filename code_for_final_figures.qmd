@@ -1,0 +1,636 @@
+---
+title: "final figures"
+format: 
+  html:
+    toc: true
+    code-fold: true
+editor: visual
+embed-resources: true
+---
+
+```{r load-libraries}
+#| warning: false
+#| echo: false
+
+library(targets)
+library(tidyverse)
+library(PupillometryR)
+library(sdamr)
+library(RColorBrewer)
+library(ggseg)
+library(ggsegGlasser)
+library(patchwork)
+library(RMINC)
+library(MRIcrotome)
+library(cowplot)
+library(figpatch)
+library(ggExtra)
+library(ggraph)
+library(igraph)
+library(tidygraph)
+library(grid)
+invisible(sapply(list.files(pattern="[.]R$", path="functions/", full.names=TRUE), source))
+```
+
+# Figure 1 -- pairwise correlation histograms
+
+```{r}
+#| warning: false
+#| echo: false
+#| fig-width: 8
+#| figh-height: 20
+
+mypalette <- c("deepskyblue1","goldenrod1","#999999")
+
+tar_load(mouse_res_age_normalized)
+tar_load(human_res_age_normalized)
+
+mouse_res_age_normalized_1 <- mouse_res_age_normalized[[1]]
+human_res_age_normalized_1 <- human_res_age_normalized[[1]]
+
+#t.test(mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)
+
+mouse_hist_all <- mouse_res_age_normalized_1 %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
+  ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + geom_point(aes(color = correlation_type), alpha = 0.01,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
+  scale_color_manual(values = mypalette) + 
+  ylim(range(human_res_age_normalized_1$correlation_m, 
+             human_res_age_normalized_1$correlation_f, mouse_res_age_normalized_1$correlation_m, 
+             mouse_res_age_normalized_1$correlation_f)) + ylab("Pearson correlation") + 
+  scale_x_discrete(label = c("F", "M")) + ggtitle("Mouse: all comparisons") + xlab("") + 
+  theme_bw() + theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+                     axis.text = element_text(size = 14),
+                     axis.title = element_text(size = 14)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + 
+  annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.043"), parse = T, family = "mono", size = 5)
+
+#t.test(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f)
+
+human_hist_all <- human_res_age_normalized_1 %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
+  ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + geom_point(aes(color = correlation_type), alpha = 0.01,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
+  scale_color_manual(values = mypalette) + 
+  ylim(range(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f, 
+             mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)) + 
+  ylab("Pearson correlation") + scale_x_discrete(label = c("F", "M")) + ggtitle("Human: all comparisons") + 
+  xlab("") + theme_bw() + theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+                                axis.text = element_text(size = 14),
+                                axis.title = element_text(size = 14)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + 
+  annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.016"), parse = T, family = "mono", size = 5)
+
+#t.test(subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_f)
+
+mouse_hist_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
+  ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + 
+  geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + 
+  geom_point(aes(color = correlation_type),alpha = 0.4,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + 
+  geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
+  scale_color_manual(values = mypalette) +
+  ylim(range(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f, 
+             mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)) + 
+  ylab("Pearson correlation") + scale_x_discrete(label = c("F", "M")) + 
+  ggtitle("Mouse: significant comparisons") + xlab("") + theme_bw() + 
+  theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.293"), parse = T, family = "mono", size = 5)
+
+#t.test(subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_f)
+
+human_hist_signif <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
+  ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + 
+  geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + 
+  geom_point(aes(color = correlation_type),alpha = 0.4,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + 
+  geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
+  scale_color_manual(values = mypalette) + 
+  ylim(range(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f, 
+             mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)) + 
+  ylab("Pearson correlation") + scale_x_discrete(label = c("F", "M")) + 
+  ggtitle("Human: significant comparisons") + xlab("") + theme_bw() + 
+  theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.156"), parse = T, family = "mono", size = 5)
+
+# mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% dim()
+# mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE & `m-f` < 0) %>% dim()
+# (44/32385)*100
+
+mouse_signif_pairwise <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% 
+  mutate(group = paste0(volume_x, volume_y), bias = ifelse(correlation_f > correlation_m, 
+                                                           "female-biased: n = 43", "male-biased: n = 1")) %>% 
+  select(group, bias, correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), 
+                                                                     names_to = "correlation_type", values_to = "cor") %>% 
+  ggplot() + aes(x = correlation_type, y = cor, group = group, color = correlation_type) + 
+  scale_color_manual(values = mypalette) + geom_line(color = "gray", alpha = 0.3) + geom_point() + 
+  theme_bw() + ylab("Pearson correlation") + 
+  theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+        axis.text = element_text(size = 14),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 14)) + 
+  scale_x_discrete(label = c("F", "M")) + facet_wrap(~bias) + ggtitle("Mouse: significant comparisons") 
+
+# human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% dim()
+# human_res_age_normalized_1 %>% filter(signif_adj == TRUE & `m-f` < 0) %>% dim()
+# (96/95266)*100
+
+human_signif_pairwise <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% 
+  mutate(group = paste0(volume_x, volume_y), bias = ifelse(correlation_f > correlation_m, 
+  "female-biased: n = 71", "male-biased: n = 25")) %>% select(group, bias, correlation_m, correlation_f) %>% 
+  pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>% 
+  ggplot() + aes(x = correlation_type, y = cor, group = group, color = correlation_type) + 
+  scale_color_manual(values = mypalette) + geom_line(color = "gray", alpha = 0.3) + 
+  geom_point() + theme_bw() + ylab("Pearson correlation") + 
+  theme(legend.position = "none", text = element_text(family = "mono", size = 12), 
+        axis.text = element_text(size = 14),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 14)) + 
+  scale_x_discrete(label = c("F", "M")) + facet_wrap(~bias) + ggtitle("Human: significant comparisons")
+
+# mouse_res_age_normalized_1 %>% summarise(mean_cor_m = mean(correlation_m), mean_cor_f = mean(correlation_f))
+# human_res_age_normalized_1 %>% summarise(mean_cor_m = mean(correlation_m), mean_cor_f = mean(correlation_f))
+
+# mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(mean_cor_m = mean(correlation_m), mean_cor_f = mean(correlation_f))
+# human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(mean_cor_m = mean(correlation_m), mean_cor_f = mean(correlation_f))
+
+fig_1 <- (mouse_hist_all + human_hist_all) / (mouse_hist_signif + human_hist_signif) / (mouse_signif_pairwise + human_signif_pairwise) + plot_annotation(tag_levels = 'A')
+
+#ggsave("figures/figure_1.png", plot = fig_1, width = 10, height = 12)
+```
+
+# Figure 2 - mouse ob, ma, bnst correlations
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 15
+#| figh-height: 20
+
+# code for making the scatter plots and marginal distributions are below. to make the brain map using cocoframer, refer to mouse_demo_regions.R 
+
+library(figpatch)
+
+brain <- fig("demo_circuit.png", link_dim = FALSE)
+
+#tar_read(demo_res_age_normalized)
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$BNST, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$`Medial amygdala`)
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$BNST, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$`Medial amygdala`)
+
+a <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `BNST`, y = `Medial amygdala`) + 
+  geom_point(aes(color = Mouse_Sex, alpha = 0.1, size = 4)) + scale_color_manual(values = c("deepskyblue1","goldenrod1")) + 
+  geom_smooth(method = "lm") + facet_wrap(~Mouse_Sex) + 
+  geom_text(aes(x = x, y = y, label = lab), data = data.frame(x = 1.37, y = 0.85, 
+  lab = c("r = 0.500\np < 0.0001", "r = 0.552\np < 0.0001"), Mouse_Sex = c("F", "M")), 
+  family = "mono", color = "ivory4", size = 8) + theme_bw() + 
+  xlab(expression(~"BNST (mm"^3*")")) + ylab(expression(~"Medial amygdala (mm"^3*")")) +
+  theme(text = element_text(family = "mono", size = 25), legend.position = "none") 
+
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$BNST, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$`Olfactory bulb`)
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$BNST, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$`Olfactory bulb`)
+b <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `BNST`, y = `Olfactory bulb`) + 
+  geom_point(aes(color = Mouse_Sex, alpha = 0.1, size = 4)) + scale_color_manual(values = c("deepskyblue1","goldenrod1")) + 
+  geom_smooth(method = "lm") + facet_wrap(~Mouse_Sex) + geom_text(aes(x = x, y = y, label = lab), 
+  data = data.frame(x = 1.37, y = 15, lab = c("r = 0.458\np < 0.0001", "r = 0.417\np < 0.0001"), 
+  Mouse_Sex = c("F", "M")), family = "mono", color = "ivory4", size = 8) + 
+  theme_bw() + theme(text = element_text(family = "mono", size = 25), legend.position = "none") + 
+  xlab(expression(~"BNST (mm"^3*")")) + ylab(expression(~"Olfactory bulb (mm"^3*")"))
+
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$`Medial amygdala`, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "F")$`Olfactory bulb`)
+# cor.test(subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$`Medial amygdala`, subset(tar_read(demo_vols_exclude_age_normalized), Mouse_Sex == "M")$`Olfactory bulb`)
+c <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + 
+  aes(x = `Medial amygdala`, y = `Olfactory bulb`) + geom_point(aes(color = Mouse_Sex, alpha = 0.1, size = 4)) + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1")) + geom_smooth(method = "lm") + 
+  facet_wrap(~Mouse_Sex) + geom_text(aes(x = x, y = y, label = lab), data = data.frame(x = 1.1, y = 15, 
+  lab = c("r = 0.367\np < 0.0001", "r = 0.450\np < 0.0001"), Mouse_Sex = c("F", "M")), 
+  family = "mono", color = "ivory4", size = 8) + theme_bw() + 
+  theme(text = element_text(family = "mono", size = 25), legend.position = "none") +
+  xlab(expression(~"Medial amygdala (mm"^3*")")) + ylab(expression(~"Olfactory bulb (mm"^3*")"))
+
+bnst <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `BNST`, fill = Mouse_Sex) + scale_fill_manual(values = c("deepskyblue1","goldenrod1")) + geom_density(alpha = 0.3) + theme_minimal() + theme(legend.position = "none", panel.grid = element_blank(), axis.text = element_blank(), axis.title = element_blank())
+
+ob <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `Olfactory bulb`, fill = Mouse_Sex) + scale_fill_manual(values = c("deepskyblue1","goldenrod1")) + geom_density(alpha = 0.3) + theme_minimal() + theme(legend.position = "none", panel.grid = element_blank(), axis.text = element_blank(), axis.title = element_blank()) + coord_flip()
+
+ma_top <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `Medial amygdala`, fill = Mouse_Sex) + scale_fill_manual(values = c("deepskyblue1","goldenrod1")) + geom_density(alpha = 0.3) + theme_minimal() + theme(legend.position = "none", panel.grid = element_blank(), axis.text = element_blank(), axis.title = element_blank())
+
+ma_right <- tar_read(demo_vols_exclude_age_normalized) %>% ggplot() + aes(x = `Medial amygdala`, fill = Mouse_Sex) + scale_fill_manual(values = c("deepskyblue1","goldenrod1")) + geom_density(alpha = 0.3) + theme_minimal() + theme(legend.position = "none", panel.grid = element_blank(), axis.text = element_blank(), axis.title = element_blank()) + coord_flip()
+
+a_marginal <- facet_ggmarginal(a, bnst, ma_right, 5)
+b_marginal <- facet_ggmarginal(b, bnst, ob, 5)
+c_marginal <- facet_ggmarginal(c, ma_top,ob, 5)
+
+fig_2 <- (brain + wrap_elements(a_marginal)) / (wrap_elements(b_marginal) + wrap_elements(c_marginal)) + plot_annotation(tag_levels = "A") & theme(text = element_text(family = "mono"), legend.position = "none", plot.tag = element_text(size = 25))
+
+#ggsave("figures/figure_2_marginal.png", plot = fig_2, height = 12, width = 25)
+```
+
+# Figure 3 - covariance sex differences locations
+
+```{r}
+#| echo: false
+#| warning: false
+
+glasser_points <- sf::st_point_on_surface(glasser$data)
+glasser_coords <- as.data.frame(sf::st_coordinates(glasser_points))
+glasser_coords <- cbind(label = glasser$data$label, side = glasser$data$side, glasser_coords) 
+
+aseg_points <- sf::st_point_on_surface(aseg$data)
+aseg_coords <- as.data.frame(sf::st_coordinates(aseg_points))
+aseg_coords <- cbind(label = aseg$data$label, aseg_coords) 
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 15
+#| fig-height: 15
+
+tar_load(anatVol)
+tar_load(labelVol)
+library(grid)
+library(figpatch)
+
+# to save maps, call cowplot::plot_grid, then use ggsave default. make sure all plots are saved at the same size though
+mouse_maps <- mouse_mean_cov_maps(tar_read(mouse_res_swap_age_normalized), tar_read(hdefs_allen), tar_read(biases_mouse))
+
+# tar_read(mouse_res_swap_age_normalized) %>% mutate(volume_x = ifelse(hemi != "midline",paste0(hemi, volume_x),volume_x)) %>% filter(signif_adj == TRUE) %>% group_by(volume_x) %>% 
+# reframe(mean.CovDiff = mean(`m-f`)) %>% 
+# mutate(status = ifelse(mean.CovDiff > 0, "m", "f")) %>%
+# group_by(status) %>% reframe(count = n())
+# 
+# tar_read(mouse_res_swap_age_normalized) %>% mutate(volume_x = ifelse(hemi != "midline",paste0(hemi, volume_x),volume_x)) %>% group_by(volume_x) %>% 
+#     reframe(mean.CovDiff = mean(`m-f`)) %>% 
+#     mutate(status = ifelse(mean.CovDiff > 0, "m", "f")) %>%
+#     group_by(status) %>% reframe(count = n())
+
+# mouse_mean_cov_values %>% left_join(tar_read(biases_mouse_orig_names)) %>% filter(bias_vol == "F" & signif_adjust == TRUE) %>% View()
+
+# mouse_mean_cov_values %>% left_join(tar_read(biases_mouse_orig_names)) %>% filter(bias_vol == "M" & signif_adjust == TRUE) %>% View()
+
+# tar_read(human_res_swap_age_normalized) %>% mutate(volume_x = ifelse(hemi != "midline",paste0(hemi, volume_x),volume_x)) %>% filter(signif_adj == TRUE) %>% group_by(volume_x) %>% 
+#     reframe(mean.CovDiff = mean(`m-f`)) %>% 
+#     mutate(status = ifelse(mean.CovDiff > 0, "m", "f")) %>%
+#     group_by(status) %>% reframe(count = n())
+
+# tar_read(human_res_swap_age_normalized) %>% mutate(volume_x = ifelse(hemi != "midline",paste0(hemi, volume_x),volume_x)) %>% group_by(volume_x) %>% 
+#     reframe(mean.CovDiff = mean(`m-f`)) %>% 
+#     mutate(status = ifelse(mean.CovDiff > 0, "m", "f")) %>%
+#     group_by(status) %>% reframe(count = n())
+
+# human_mean_cov_values %>% left_join(tar_read(biases_human_orig_names)) %>% filter(bias_vol == "M" & signif_adjust == TRUE) %>% View()
+
+# human_mean_cov_values %>% left_join(tar_read(biases_human_orig_names)) %>% filter(bias_vol == "F" & signif_adjust == TRUE) %>% View()
+
+human_maps <- human_mean_cov_maps(tar_read(map_names), tar_read(human_res_swap_age_normalized),tar_read(biases_human), glasser_coords, aseg_coords) 
+
+fig_3 <- wrap_elements(mouse_maps) + wrap_elements(human_maps) + plot_annotation(tag_levels = "A") & theme(text = element_text(family = "mono", size = 15))
+ggsave("figures/figure_3.png",plot = fig_3, width = 15, height = 15)
+
+#----old setup----
+# mouse_biases_maps <- fig("figures/figure_4_mouse_vols.png", b_margin = ggplot2::margin(0,0,0,0), b_pos = "inset", aspect.ratio = "free")
+# human_biases_maps <- fig("human_biases_maps.png", b_margin = ggplot2::margin(0,0,0,0),
+#                          b_pos = "inset", aspect.ratio = "free")
+# 
+# mouse_cov_maps <- fig("figures/figure_4_mouse_cov.png", b_margin = ggplot2::margin(0,0,0,0), b_pos = "inset", aspect.ratio = "free")
+# 
+# human_cov_maps <- fig("human_cov_maps.png", b_margin = ggplot2::margin(0,0,0,0), 
+#                       b_pos = "inset", aspect.ratio = "free")
+# 
+# design <- c(area(1,1,1,1),
+#             area(1,2,1,2),
+#             area(1,3,1,3),
+#             area(1,4,1,4))
+# 
+# mouse_biases_maps + mouse_cov_maps + human_biases_maps + human_cov_maps + plot_layout(design = design) + plot_annotation(tag_levels = "A") & theme(plot.tag = element_text(family = "mono"))
+```
+
+# Figure 4 - mouse nodes and edges visualization
+
+```{r}
+#| echo: false
+#| warning: false
+#------covariance sex differences nodes edges visualization----
+
+biases_mouse_select <- tar_read(biases_mouse_orig_names) %>% select(volume_x, bias_vol, estimate, signif_adjust) %>% 
+  mutate(estimate = abs(estimate)) %>% as_tibble() %>% rename(name = volume_x) %>% mutate(bias_vol = ifelse(signif_adjust == TRUE, bias_vol, "none"))
+
+mypalette_nodes <- c("F" = "deepskyblue1","M" = "goldenrod1",
+                     "none"= "#999999") 
+
+big_nodes_mouse <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(volume_x, volume_y, `m-f`) %>% mutate(weight = abs(`m-f`)) %>% rename(from = volume_x, to = volume_y) %>% mutate(bias_cov = ifelse(`m-f` > 0, "M", "F")) %>% select(-`m-f`) %>% graph_from_data_frame(directed = FALSE) %>% as_tbl_graph(directed = FALSE) %>% activate(nodes) %>% mutate(eigen_centrality = centrality_eigen(), degree_centrality = centrality_degree(), hub_centrality = centrality_hub()) %>% arrange(desc(degree_centrality)) %>% left_join(biases_mouse_select) 
+
+mouse_largest_component <- components(big_nodes_mouse)[1] %>% as.data.frame() %>% filter(membership == 1 | membership == 2) %>% rownames_to_column() %>% rename(name = rowname)
+
+set.seed(2000)
+mouse_graph <- big_nodes_mouse %>% filter(name %in% mouse_largest_component$name) %>% ggraph(layout = 'graphopt') + geom_node_point() + geom_node_point(aes(colour = bias_vol), size = 8, alpha = 0.5) + geom_edge_link(aes(color = bias_cov, width = weight), alpha = 0.8) + scale_colour_manual(values = mypalette_nodes) + scale_edge_width_continuous(range = c(0.1, 1), name = "covariance sex bias\neffect size") + 
+    scale_edge_colour_manual(values = mypalette_nodes, aesthetics = "edge_colour", breaks = waiver(), na.value = "grey50", name = "covariance sex bias\ndirection") + 
+    geom_node_text(aes(label = name), size = 5, repel = TRUE, family = "mono") + ggtitle("Mouse: Covariance sex differences - largest connected components") + 
+    theme(panel.background = element_rect(fill = "white"),text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15)) + guides(color=guide_legend(title = "volumetric sex bias\ndirection", order = 1))
+ggsave(plot = mouse_graph, "figures/supplementary/mouse_components.png", width = 15, height = 15) 
+```
+
+# Figure 5 - human nodes and edges visualization
+
+```{r}
+#| echo: false
+#| warning: false
+
+biases_human_select <- tar_read(biases_human_orig_names) %>% select(volume_x, bias_vol, estimate, signif_adjust) %>% mutate(estimate = abs(estimate)) %>% as_tibble() %>% rename(name = volume_x) %>% mutate(bias_vol = ifelse(signif_adjust == TRUE, bias_vol, "none"))
+
+big_nodes_human <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(volume_x, volume_y, `m-f`) %>% mutate(weight = abs(`m-f`)) %>% rename(from = volume_x, to = volume_y) %>% mutate(bias_cov = ifelse(`m-f` > 0, "M", "F")) %>% select(-`m-f`) %>% graph_from_data_frame(directed = FALSE) %>% as_tbl_graph(directed = FALSE) %>% activate(nodes) %>% mutate(eigen_centrality = centrality_eigen(), degree_centrality = centrality_degree(), hub_centrality = centrality_hub()) %>% arrange(desc(degree_centrality)) %>% left_join(biases_human_select) %>% 
+mutate(estimate = ifelse(signif_adjust == TRUE, 
+                         estimate, NA))
+
+human_largest_component <- largest_component(big_nodes_human)
+
+set.seed(205)
+human_graph <- human_largest_component %>% ggraph(layout = 'graphopt') + geom_node_point() + geom_node_point(aes(colour = bias_vol), size = 8, alpha = 0.5) + geom_edge_link(aes(color = bias_cov, width = weight), alpha = 0.8) + scale_colour_manual(values = mypalette_nodes) + scale_edge_width_continuous(range = c(0.1, 1), name = "covariance sex bias\neffect size") + 
+    scale_edge_colour_manual(values = mypalette_nodes, aesthetics = "edge_colour", breaks = waiver(), na.value = "grey50", name = "covariance sex bias\ndirection") + 
+    geom_node_text(aes(label = name), size = 5, repel = TRUE, family = "mono") + ggtitle("Human: Covariance sex differences - largest connected component") + 
+    theme(panel.background = element_rect(fill = "white"),text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15)) + guides(color=guide_legend(title = "volumetric sex bias\ndirection", order = 1))
+
+ggsave(plot = human_graph, "figures/supplementary/human_components.png", width = 15, height = 15)
+```
+
+# Figure 6 - relationship between covariance sex differences and volume
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 20
+#| fig-height: 10
+
+#-----mouse-------
+# cor.test(tar_read(vol_cov_mouse_mean_absolute_age_normalized)$meanCov, tar_read(vol_cov_mouse_mean_absolute_age_normalized)$estimate)
+
+mouse_volCov_absolute <- tar_read(vol_cov_mouse_mean_absolute_age_normalized) %>% mutate(bias_vol_adj = ifelse(signif_adjust == TRUE, bias_vol, "not biased")) %>% ggplot() + aes(x = abs(meanCov), y = abs(estimate), color = bias_vol_adj) + geom_point(alpha = 0.7) + geom_smooth(method = "lm", color = "black") + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1", "#999999")) + theme_bw() + 
+  labs(title = "Mouse: all comparisons\n(absolute values)") + xlab("regional mean correlation sex bias") + 
+  ylab("volumetric sex bias value") + theme(text = element_text(family = "mono", size = 12), 
+                                            axis.text = element_text(size = 13), legend.position = "none") + 
+  guides(color = guide_legend("volumetric sex bias status")) + geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0.05, linetype = "dashed", color = "gray") + 
+  geom_text(x = 0.125, y = 1.0, label = "r = 0.033\np = 0.603", family = "mono", color = "ivory4", size = 6) + 
+  ylim(range(-0.01, abs(tar_read(vol_cov_mouse_mean_absolute_age_normalized)$estimate),
+             abs(tar_read(vol_cov_human_mean_absolute_age_normalized)$estimate)))
+
+# cor.test(tar_read(vol_cov_mouse_mean_age_normalized)$meanCov, tar_read(vol_cov_mouse_mean_age_normalized)$estimate)
+
+#tar_read(vol_cov_mouse_mean_age_normalized) %>% summarise(median(meanCov))
+
+mouse_volCov <- tar_read(vol_cov_mouse_mean_age_normalized) %>% 
+  mutate(bias_vol_adj = ifelse(signif_adjust == TRUE, bias_vol, "not biased")) %>% 
+  ggplot() + aes(x = meanCov, y = estimate, color = bias_vol_adj) + 
+  geom_point(alpha = 0.7) + geom_smooth(method = "lm", color = "black") + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1", "#999999")) + 
+  theme_bw() + ylim(-0.6, 1.2) + labs(title = "Mouse: all comparisons\n(signed)") + xlab("regional mean correlation sex bias") + 
+  ylab("volumetric sex bias value") + theme(text = element_text(family = "mono", size = 12), 
+                                            axis.text = element_text(size = 13), legend.position = "none") + 
+  guides(color = guide_legend("volumetric sex bias status")) + 
+  geom_text(x = 0.03, y = 1.0, label = "r = -0.185\np = 0.002", family = "mono", color = "ivory4", size = 6) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = -0.0438, linetype = "dashed", color = "red")
+
+#------human-------
+
+# cor.test(tar_read(vol_cov_human_mean_absolute_age_normalized)$meanCov,            tar_read(vol_cov_human_mean_absolute_age_normalized)$estimate)
+
+human_volCov_absolute <- tar_read(vol_cov_human_mean_absolute_age_normalized) %>% mutate(bias_vol_adj = ifelse(signif_adjust == TRUE, bias_vol, "not biased")) %>% ggplot() + aes(x = abs(meanCov), y = abs(estimate), color = bias_vol_adj) + geom_point(alpha = 0.7) + geom_smooth(method = "lm", color = "black") + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1", "#999999")) + theme_bw() + 
+  labs(title = "Human: all comparisons\n(absolute values)") + xlab("regional mean correlation sex bias") + 
+  ylab("volumetric sex bias value") + theme(text = element_text(family = "mono", size = 12), 
+                                            axis.text = element_text(size = 13), legend.position = "none") + 
+  guides(color = guide_legend("volumetric sex bias status")) + geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0.05, linetype = "dashed", color = "gray") + 
+  geom_text(x = 0.1375, y = 1.0, label = "r = 0.131\np = 0.989", family = "mono", color = "ivory4", size = 6) + 
+  ylim(range(-0.01, abs(tar_read(vol_cov_mouse_mean_absolute_age_normalized)$estimate), abs(tar_read(vol_cov_human_mean_absolute_age_normalized)$estimate)))
+
+# cor.test(tar_read(vol_cov_human_mean_age_normalized)$meanCov,           tar_read(vol_cov_human_mean_age_normalized)$estimate)
+
+#tar_read(vol_cov_human_mean_age_normalized) %>% summarise(median(meanCov))
+
+volCov_legend <- tar_read(vol_cov_human_mean_age_normalized) %>% 
+  mutate(bias_vol_adj = ifelse(signif_adjust == TRUE, bias_vol, "not biased")) %>% 
+  ggplot() + aes(x = meanCov, y = estimate, color = bias_vol_adj) + 
+  geom_point(alpha = 0.7) + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1", "#999999")) + theme_bw() +
+  theme(text = element_text(family = "mono", size = 10), legend.position = "bottom",
+        legend.title = element_text(size = 15), 
+        legend.text = element_text(size = 15)) + 
+  guides(color = guide_legend("volumetric sex bias status"))
+
+legend_marginal <- cowplot::get_plot_component(volCov_legend, 'guide-box-bottom', return_all = TRUE)
+
+human_volCov <- tar_read(vol_cov_human_mean_age_normalized) %>% 
+  mutate(bias_vol_adj = ifelse(signif_adjust == TRUE, bias_vol, "not biased")) %>% 
+  ggplot() + aes(x = meanCov, y = estimate, color = bias_vol_adj) + geom_point(alpha = 0.7) + 
+  geom_smooth(method = "lm", color = "black") + 
+  scale_color_manual(values = c("deepskyblue1","goldenrod1", "#999999")) + 
+  theme_bw() + ylim(-0.6, 1.2) + labs(title = "Human: all comparisons\n(signed)") + 
+  xlab("regional mean correlation sex bias") + ylab("volumetric sex bias value") + 
+  theme(text = element_text(family = "mono", size = 12), 
+        axis.text = element_text(size = 13), legend.position = "none") + 
+  guides(color = guide_legend("volumetric sex bias status")) + 
+  geom_text(x = 0.055, y = 1, label = "r = -0.189\np = 0.001", family = "mono", color = "ivory4", size = 6) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = -0.01729, linetype = "dashed", color = "red")
+
+# old set up
+# mouse_marginal <- ggMarginal(mouse_volCov, type = "density", groupFill = TRUE) 
+# human_marginal <- ggMarginal(human_volCov, type = "density", groupFill = TRUE)
+
+# ff_mm_human <- tally_ff_mm(human_res_age_normalized_1, tar_read(biases_human_orig_names)) 
+# ff_mm_mouse <- tally_ff_mm(mouse_res_age_normalized_1, tar_read(biases_mouse_orig_names)) 
+# 
+# # t.test(subset(ff_mm_human, pairing == "F-F")$`m-f`, subset(ff_mm_human, pairing == "M-M")$`m-f`)
+# #t.test(subset(ff_mm_mouse, pairing == "F-F")$`m-f`, subset(ff_mm_mouse, pairing == "M-M")$`m-f`)
+# 
+# ff_mm_mouse_plot <- ff_mm_mouse %>% ggplot() + 
+#   aes(x = pairing, y = `m-f`, fill = pairing, color = pairing) + 
+#   geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6, guide = "none") + 
+#   geom_point(aes(color = pairing), alpha = 0.1,
+#              position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2),
+#              guide = "none") + 
+#   geom_boxplot(alpha = 0.2, width = 0.2, guide = "none") + scale_fill_manual(values = mypalette, guide = "none") +
+#   scale_color_manual(values = mypalette, guide = "none") + 
+#   ylim(range(ff_mm_mouse$`m-f`, ff_mm_human$`m-f`)) + 
+#   ylab("Correlation sex difference (m-f)") + 
+#   xlab("Pairing type") + 
+#   ggtitle("Mouse: volumetric bias pairings\nvs. covariance sex differences") + xlab("") + theme_bw() + 
+#   theme(legend.position = "none", text = element_text(family = "mono", size = 10)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + 
+#   annotate("text", x = 1.5, y = 0.25, label = expression(Delta~"= 0.039"), parse = T, family = "mono", size = 6) 
+# 
+# ff_mm_human_plot <- ff_mm_human %>% ggplot() + 
+#   aes(x = pairing, y = `m-f`, fill = pairing, color = pairing) + 
+#   geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6, guide = "none") + 
+#   geom_point(aes(color = pairing), alpha = 0.1,
+#              position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2), guide = "none") + 
+#   geom_boxplot(alpha = 0.2, width = 0.2, guide = "none") + scale_fill_manual(values = mypalette, guide = "none") +
+#   scale_color_manual(values = mypalette, guide = "none") + 
+#   ylim(range(ff_mm_mouse$`m-f`, ff_mm_human$`m-f`)) + 
+#   ylab("Correlation sex difference (m-f)") + 
+#   xlab("Pairing type") + 
+#   ggtitle("Human: volumetric bias pairings\nvs. covariance sex differences") + xlab("") + theme_bw() + 
+#   theme(legend.position = "none", text = element_text(family = "mono", size = 10)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + 
+#   annotate("text", x = 1.5, y = 0.25, label = expression(Delta~"= 0.039"), parse = T, family = "mono", size = 6) 
+
+# fig_4 <- (mouse_volCov_absolute + human_volCov_absolute) / (mouse_volCov + human_volCov) + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(text = element_text(family = "mono", size = 10), legend.position = "bottom")
+
+marginal_mouse_abs <- ggMarginal(mouse_volCov_absolute, type = "density", groupFill = TRUE, margins = 'x')
+
+marginal_human_abs <- ggMarginal(human_volCov_absolute, type = "density", groupFill = TRUE, margins = 'x')
+
+marginal_mouse <- ggMarginal(mouse_volCov, type = "density", groupFill = TRUE, margins = 'x')
+
+marginal_human <- ggMarginal(human_volCov, type = "density", groupFill = TRUE, margins = 'x')
+
+fig_6_pre <- (wrap_elements(marginal_mouse_abs) + wrap_elements(marginal_human_abs))/(wrap_elements(marginal_mouse) + wrap_elements(marginal_human)) + 
+  plot_annotation(tag_levels = "A") & theme(text = element_text(family = "mono", size = 10), legend.position = "bottom")
+
+fig_6 <- wrap_elements(fig_6_pre) / wrap_elements(legend_marginal) + plot_layout(ncol = 1, heights = c(2, 0.1))
+
+#ggsave("figures/figure_6.png", plot = fig_6, width = 12, height = 10)
+```
+
+# Supplemental Section
+
+## Nodes and Edges Visualization
+
+```         
+```
+
+## Full Covariance Matrices
+
+### Setting up
+
+```{r}
+#| echo: false
+#| warning: false
+
+library(pheatmap)
+library(data.table)
+```
+
+### Human matrices and cluster definitions
+
+```{r}
+#| echo: false
+#| warning: false
+
+human_atlas_map <- human_anatomy_map(tar_read(map_names))
+human_heatmaps <- human_matrix_arrange(tar_read(map_names))
+
+layout_heatmaps <- c(area(1,1,6,4), area(1,5,6,6))
+
+human_matrices_and_atlases <- wrap_elements(human_heatmaps) + wrap_elements(human_atlas_map) + plot_layout(design = layout_heatmaps)
+
+ggsave(plot = human_matrices_and_atlases, "figures/supplementary/human_covariance_matrices.png", height = 10, width = 10) # use 6.61 x 9.99
+```
+
+### Mouse matrices and cluster definitions
+
+```{r}
+#| echo: false
+#| warning: false
+
+mouse_matrix_arrange(tar_read(hdefs_allen))
+```
+
+### Relationship between covariance strength and covariance sex differences
+
+### Model data
+
+```{r}
+#| echo: false
+#| warning: false
+
+fake_matrix <- matrix(c(1,-0.5, -0.5, 1),2,2)
+
+fake_data <- faux::rnorm_multi(n = 100,
+                      mu = c(40,30),
+                      sd = c(10,5),
+                      r = fake_matrix,
+                      empirical = FALSE)
+
+fake_data <- fake_data/100
+
+colnames(fake_data) <- c("correlations", "cor_diff")
+
+fake_data %>%
+  ggplot() +
+  aes(x = correlations, y = cor_diff) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw() +
+  theme(text = element_text(family = "mono", size = 12)) +
+  geom_vline(xintercept = mean(fake_data$correlations), color = "grey", linetype = "dashed") +
+  geom_hline(yintercept = mean(fake_data$cor_diff), color = "grey", linetype = "dashed") +
+  xlab("Pearson correlations") +
+  ylab("Correlation sex differences\n(effect size)") +
+  annotate("rect", xmin = mean(fake_data$correlations), ymax = mean(fake_data$cor_diff), fill = "darkgreen", alpha = 0.2, xmax = 0.75, ymin = 0.15) + annotate("rect", xmax = mean(fake_data$correlations), ymin = mean(fake_data$cor_diff), fill = "green", alpha = 0.2, xmin = 0.15, ymax = 0.45) + ylim(0.10, 0.45) + xlim(0.15, 0.7) + scale_x_continuous(expand = c(0,0)) +
+scale_y_continuous(expand = c(0,0)) + 
+annotate("text", label = "Sex-specific developmental\ninfluences predominate",
+         x = 0.29, y = 0.43, family = "mono", size = 5) +
+annotate("text", label = "Shared developmental\ninfluences predominate",
+         x = 0.6, y = 0.18, family = "mono", size = 5) + 
+ggtitle("Demo: Covariance strength vs. covariance sex differences")
+
+ggsave("figures/supplementary/demo.png", width = 9, height = 7)
+```
+
+### Actual results
+
+```{r}
+#| echo: false
+#| warning: false
+
+mouse_f_all <- mouse_res_age_normalized_1  %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% filter(sex == "f") %>% ggplot() + aes(x = correlation, y = abs(`m-f`)) + geom_hex(bins = 70) + scale_fill_gradient(low = "deepskyblue1", high = "royalblue") + ggtitle("Mouse: female all comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "none") #+ ylim(0, 0.45) + xlim(-0.3, 1.0)
+
+human_f_all <- human_res_age_normalized_1  %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% filter(sex == "f") %>% ggplot() + aes(x = correlation, y = abs(`m-f`)) + geom_hex(bins = 70) + scale_fill_gradient(low = "deepskyblue1", high = "royalblue") + ggtitle("Human: female all comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "none") #+ ylim(0, 0.45) + xlim(-0.3, 1.0)
+
+mouse_m_all <- mouse_res_age_normalized_1  %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% filter(sex == "m") %>% ggplot() + aes(x = correlation, y = abs(`m-f`)) + geom_hex(bins = 70) + scale_fill_gradient(low = "orange1", high = "goldenrod1") + ggtitle("Mouse: male all comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "none") #+ ylim(0, 0.45) + xlim(-0.3, 1.0)
+
+human_m_all <- human_res_age_normalized_1  %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% filter(sex == "m") %>% ggplot() + aes(x = correlation, y = abs(`m-f`)) + geom_hex(bins = 70) + scale_fill_gradient(low = "orange1", high = "goldenrod1") + ggtitle("Human: male all comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "none") #+ ylim(0, 0.45) + xlim(-0.3, 1.0)
+
+mouse_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Mouse: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.409; p = 0.006\nmale r = -0.653; p < 0.0001", family = "mono", color = "ivory4", size = 6) + ylim(0, 0.45) + xlim(-0.3, 1.0) + 
+  theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
+
+human_signif <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Human: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.108; p = 0.293\nmale r = -0.219; p = 0.032", family = "mono", color = "ivory4", size = 6) + ylim(0.0, 0.45) + xlim(-0.3, 1.0) +
+  theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
+
+strength_vs_difference <- (mouse_f_all + human_f_all) / (mouse_m_all + human_m_all) / (mouse_signif + human_signif) +
+  plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A', theme = theme(legend.position = "bottom"))
+
+ggsave(plot = strength_vs_difference, 
+       "figures/supplementary/strength_vs_difference.png", 
+       width = 12, height = 15)
+
+human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(cor.test(correlation_m, abs(`m-f`))$estimate, cor.test(correlation_m, abs(`m-f`))$p.value)
+
+human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(cor.test(correlation_f, abs(`m-f`))$estimate, cor.test(correlation_f, abs(`m-f`))$p.value)
+
+mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(cor.test(correlation_m, abs(`m-f`))$estimate, cor.test(correlation_m, abs(`m-f`))$p.value)
+
+mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(cor.test(correlation_f, abs(`m-f`))$estimate, cor.test(correlation_f, abs(`m-f`))$p.value)
+```
+
+### Full covariance sex differences results
+
+```{r}
+#| echo: false
+#| warning: false
+
+write_csv(human_res_age_normalized_1, "figures/supplementary/human_full_results.csv")
+                      
+write_csv(mouse_res_age_normalized_1, "figures/supplementary/mouse_full_results.csv")
+```
+
+### Full mean covariance sex differences results
+
+```{r}
+#| echo: false
+#| warning: false
+
+mouse_mean_cov_csv <- tar_read(mouse_res_swap_orig_names) %>% group_by(volume_x) %>% summarise(meanCov_signed = mean(`m-f`), meanCov_absolute = mean(effect_size))
+
+human_mean_cov_csv <- tar_read(human_res_swap_orig_names) %>% group_by(volume_x) %>% summarise(meanCov_signed = mean(`m-f`), meanCov_absolute = mean(effect_size))
+
+write_csv(mouse_mean_cov_csv, "figures/supplementary/Supplementary_Table_3.csv")
+write_csv(human_mean_cov_csv, "figures/supplementary/Supplementary_Table_4.csv")
+```
