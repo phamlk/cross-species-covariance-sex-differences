@@ -2,8 +2,8 @@
 
 ## Requirements:
 
-R (version 4.2.3) & RStudio
-[targets package](https://books.ropensci.org/targets/) 
+1. R (version 4.2.3) & RStudio
+2. [targets package](https://books.ropensci.org/targets/) 
 
 ## Steps:
 
