@@ -94,8 +94,8 @@ mouse_mean_cov_maps <- function(res_swap, tree, bias) {
   overlay(hanatToVolume(tree, labelVol, "signif"), low = 0, high = 0.45,
   col = positive_cols(), rCol=negative_cols(), symmetric = T) %>%
   legend("mean covariance sex-bias") %>%
-  contours(hanatToVolume(tree, labelVol, "vol.bias.signif"), levels=1, col = "white",
-           lty = 3, lwd = 5) %>%
+  #contours(hanatToVolume(tree, labelVol, "vol.bias.signif"), levels=1, col = "white",
+  #         lty = 3, lwd = 5) %>%
   addtitle("signif comparisons") %>%
   grobify(titlePars = gpar(fontsize = 20, cex = 0.88, fontfamily = "mono"),
           legendPars = gpar(fontsize = 16, cex = 0.88, fontfamily = "mono"))

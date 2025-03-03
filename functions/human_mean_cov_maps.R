@@ -428,8 +428,9 @@ human_mean_cov_maps <- function(names, res_swap, bias, glasser_coords, aseg_coor
                            high = c("goldenrod1","orange1","firebrick2", "firebrick3","firebrick","red4"),
                            midpoint = 0,na.value="grey",limits = set_range_cov,
                            n.breaks=5) +
-      geom_text(data = glasser_stars_left_lateral, aes(X, Y, label = stars), colour = "white",
-                size = 7) + theme_void() + 
+      #geom_text(data = glasser_stars_left_lateral, aes(X, Y, label = stars), colour = "white",
+       #         size = 10) + 
+      theme_void() + 
       theme(axis.text.y = element_blank(),
             plot.title = element_text(size = 18, hjust = 0.5)) +
       theme(axis.text.y = element_blank(),
@@ -443,8 +444,8 @@ human_mean_cov_maps <- function(names, res_swap, bias, glasser_coords, aseg_coor
                            high = c("goldenrod1","orange1","firebrick2", "firebrick3","firebrick","red4"),
                            midpoint = 0,na.value="grey",limits = set_range_cov,
                            n.breaks=5) +
-      geom_text(data = glasser_stars_right_lateral, aes(X,Y,label = stars), color = "white",
-                size = 7) + 
+      # geom_text(data = glasser_stars_right_lateral, aes(X,Y,label = stars), color = "white",
+      #           size = 10) + 
       theme_void() + 
       theme(axis.text.y = element_blank(),
             plot.title = element_text(size = 18, hjust = 0.5)) +
@@ -458,8 +459,8 @@ human_mean_cov_maps <- function(names, res_swap, bias, glasser_coords, aseg_coor
                            high = c("goldenrod1","orange1","firebrick2", "firebrick3","firebrick","red4"),
                            midpoint = 0,na.value="grey",limits = set_range_cov,
                            n.breaks=5) +
-      geom_text(data = glasser_stars_left_medial, aes(X,Y,label = stars), color = "white",
-                size = 7) + 
+      #geom_text(data = glasser_stars_left_medial, aes(X,Y,label = stars), color = "white",
+      #          size = 10) + 
       theme_void() + 
       theme(axis.text.y = element_blank(),
             plot.title = element_text(size = 18, hjust = 0.5)) +
@@ -476,9 +477,9 @@ human_mean_cov_maps <- function(names, res_swap, bias, glasser_coords, aseg_coor
                            midpoint = 0,na.value="grey",limits = set_range_cov, 
                            n.breaks=6,
                            labels = c("F > M", "-0.2", "0.0", "0.2", "M > F")) + 
-      geom_text(data = glasser_stars_right_medial, 
-                aes(X, Y, label = stars), colour = "white", 
-                size = 7) + 
+      #geom_text(data = glasser_stars_right_medial, 
+                # aes(X, Y, label = stars), colour = "white", 
+                # size = 10) + 
       theme(axis.text.y = element_blank(), 
             legend.title = element_text(angle = 90, size = 18),
             legend.text = element_text(size = 18),
@@ -542,7 +543,8 @@ human_mean_cov_maps <- function(names, res_swap, bias, glasser_coords, aseg_coor
                              high = c("goldenrod1","orange1","firebrick2", "firebrick3","firebrick","red4"),
                              midpoint = 0,na.value="grey",limits = set_range_cov,
                              n.breaks=5) +
-        geom_text(data = aseg_stars, aes(X, Y, label = stars), colour = "white", size = 7) + theme_void() +
+        #geom_text(data = aseg_stars, aes(X, Y, label = stars), colour = "white", size = 10) + 
+        theme_void() +
         theme(axis.text.y = element_blank(),
               plot.title = element_text(size = 18, hjust = 0.5)) +
         theme(axis.text.y = element_blank(),
