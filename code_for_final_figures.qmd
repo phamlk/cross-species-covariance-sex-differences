@@ -50,6 +50,9 @@ human_res_age_normalized_1 <- human_res_age_normalized[[1]]
 
 #t.test(mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)
 
+wilcox.test(mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f, conf.int = TRUE)
+
+#leveneTest(mouse_res_age_normalized_1$correlation_m, mouse_res_age_normalized_1$correlation_f)
 mouse_hist_all <- mouse_res_age_normalized_1 %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
   ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + geom_point(aes(color = correlation_type), alpha = 0.01,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
   scale_color_manual(values = mypalette) + 
@@ -64,6 +67,9 @@ mouse_hist_all <- mouse_res_age_normalized_1 %>% select(correlation_m, correlati
 
 #t.test(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f)
 
+wilcox.test(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f, conf.int = TRUE)
+
+#leveneTest(human_res_age_normalized_1$correlation_m, human_res_age_normalized_1$correlation_f)
 human_hist_all <- human_res_age_normalized_1 %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
   ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + geom_flat_violin(position = position_nudge(x = .15), alpha = 0.6) + geom_point(aes(color = correlation_type), alpha = 0.01,position = position_jitternudge(jitter.width = 0.1, nudge.x = -0.2)) + geom_boxplot(alpha = 0.2, width = 0.2) + scale_fill_manual(values = mypalette) +
   scale_color_manual(values = mypalette) + 
@@ -76,6 +82,8 @@ human_hist_all <- human_res_age_normalized_1 %>% select(correlation_m, correlati
   annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.016"), parse = T, family = "mono", size = 5)
 
 #t.test(subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_f)
+
+wilcox.test(subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(mouse_res_age_normalized_1, signif_adj == TRUE)$correlation_f, conf.int = TRUE)
 
 mouse_hist_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
   ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + 
@@ -92,6 +100,8 @@ mouse_hist_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %
         axis.title = element_text(size = 14)) + geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + annotate("text", x = 1.5, y = 0.8, label = expression(Delta~"= 0.293"), parse = T, family = "mono", size = 5)
 
 #t.test(subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_f)
+
+wilcox.test(subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_m, subset(human_res_age_normalized_1, signif_adj == TRUE)$correlation_f, conf.int = TRUE)
 
 human_hist_signif <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% select(correlation_m, correlation_f) %>% pivot_longer(c("correlation_m", "correlation_f"), names_to = "correlation_type", values_to = "cor") %>%
   ggplot() + aes(x = correlation_type, y = cor, fill = correlation_type, color = correlation_type) + 
@@ -321,6 +331,28 @@ mouse_graph <- big_nodes_mouse %>% filter(name %in% mouse_largest_component$name
     geom_node_text(aes(label = name), size = 5, repel = TRUE, family = "mono") + ggtitle("Mouse: Covariance sex differences - largest connected components") + 
     theme(panel.background = element_rect(fill = "white"),text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15)) + guides(color=guide_legend(title = "volumetric sex bias\ndirection", order = 1))
 ggsave(plot = mouse_graph, "figures/supplementary/mouse_components.png", width = 15, height = 15) 
+
+# find thresholding effects
+
+
+mouse_l_r <- mouse_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "m-f"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = `m-f`) %>% filter(is.na(midline)) %>% select(-midline) %>% filter(!is.na(left) & !is.na(right)) 
+
+library(scattermore)
+
+mouse_l_r_male <- mouse_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "correlation_m"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = correlation_m) %>% filter(is.na(midline)) %>% select(-midline) %>% filter(!is.na(left) & !is.na(right)) 
+
+mouse_l_r_female <- mouse_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "correlation_f"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = correlation_f) %>% filter(is.na(midline)) %>% select(-midline) %>% filter(!is.na(left) & !is.na(right)) 
+
+library(scattermore)
+
+mouse_l_r %>% select(any_of(c("left", "right"))) %>% ggplot() + geom_scattermore(aes(left, right), pointsize = 2, pixels = c(700, 700)) + geom_vline(xintercept = 0, color = "blue") + geom_hline(yintercept = 0, color = "blue") + xlim(range(mouse_l_r$left, mouse_l_r$right)) + ylim(range(mouse_l_r$left, mouse_l_r$right)) + geom_abline(slope = 1, intercept = 0, color = "red") + ggtitle("mouse: left and right correlation sex differences (r = 0.57, p < 0.0001)") 
+
+library(DescTools)
+cor.test(mouse_l_r$left, mouse_l_r$right)
+CCC(mouse_l_r$left, mouse_l_r$right)
+
+#visualize
+mouse_l_r %>% select(any_of(c("left", "right"))) %>% ggplot() + geom_scattermore(aes(left, right), pointsize = 2, pixels = c(700, 700)) + geom_vline(xintercept = 0, color = "blue") + geom_hline(yintercept = 0, color = "blue") + xlim(range(mouse_l_r$right, mouse_l_r$left)) + ylim(range(mouse_l_r$right, mouse_l_r$left)) + geom_abline(slope = 1, intercept = 0, color = "red") + ggtitle("mouse")
 ```
 
 # Figure 5 - human nodes and edges visualization
@@ -338,12 +370,26 @@ mutate(estimate = ifelse(signif_adjust == TRUE,
 human_largest_component <- largest_component(big_nodes_human)
 
 set.seed(205)
+
 human_graph <- human_largest_component %>% ggraph(layout = 'graphopt') + geom_node_point() + geom_node_point(aes(colour = bias_vol), size = 8, alpha = 0.5) + geom_edge_link(aes(color = bias_cov, width = weight), alpha = 0.8) + scale_colour_manual(values = mypalette_nodes) + scale_edge_width_continuous(range = c(0.1, 1), name = "covariance sex bias\neffect size") + 
     scale_edge_colour_manual(values = mypalette_nodes, aesthetics = "edge_colour", breaks = waiver(), na.value = "grey50", name = "covariance sex bias\ndirection") + 
     geom_node_text(aes(label = name), size = 5, repel = TRUE, family = "mono") + ggtitle("Human: Covariance sex differences - largest connected component") + 
     theme(panel.background = element_rect(fill = "white"),text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15)) + guides(color=guide_legend(title = "volumetric sex bias\ndirection", order = 1))
 
 ggsave(plot = human_graph, "figures/supplementary/human_components.png", width = 15, height = 15)
+
+# find thresholding effect 
+
+human_l_r <- human_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "m-f"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = `m-f`) %>% filter(is.na(other)) %>% select(-other) %>% filter(!is.na(L) & !is.na(R)) 
+
+# visualize 
+human_l_r %>% select(any_of(c("L", "R"))) %>% ggplot() + geom_scattermore(aes(L, R), pointsize = 2, pixels = c(700, 700)) + geom_vline(xintercept = 0, color = "blue") + geom_hline(yintercept = 0, color = "blue") + xlim(range(human_l_r$R, human_l_r$L)) + ylim(range(human_l_r$R, human_l_r$L)) + geom_abline(slope = 1, intercept = 0, color = "red") + ggtitle("human: left and right correlation sex differences (r = 0.48, p < 0.0001)")
+
+human_l_r_male <- human_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "correlation_m"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = `correlation_m`) %>% filter(is.na(other)) %>% select(-other) %>% filter(!is.na(L) & !is.na(R)) 
+
+human_l_r_female <- human_res_swap_age_normalized %>% select(any_of(c("hemi", "volume_x", "volume_y", "correlation_f"))) %>% pivot_wider(id_cols = c("volume_x", "volume_y"), names_from = hemi, values_from = `correlation_f`) %>% filter(is.na(other)) %>% select(-other) %>% filter(!is.na(L) & !is.na(R)) 
+
+cor.test(human_l_r$L, human_l_r$R)
 ```
 
 # Figure 6 - relationship between covariance sex differences and volume
@@ -490,11 +536,6 @@ fig_6 <- wrap_elements(fig_6_pre) / wrap_elements(legend_marginal) + plot_layout
 
 # Supplemental Section
 
-## Nodes and Edges Visualization
-
-```         
-```
-
 ## Full Covariance Matrices
 
 ### Setting up
@@ -529,7 +570,7 @@ ggsave(plot = human_matrices_and_atlases, "figures/supplementary/human_covarianc
 #| echo: false
 #| warning: false
 
-mouse_matrix_arrange(tar_read(hdefs_allen))
+mouse_matrix_arrange(tar_read(hdefsCopy))
 ```
 
 ### Relationship between covariance strength and covariance sex differences
@@ -588,18 +629,55 @@ mouse_m_all <- mouse_res_age_normalized_1  %>% pivot_longer(cols = c("correlatio
 
 human_m_all <- human_res_age_normalized_1  %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% filter(sex == "m") %>% ggplot() + aes(x = correlation, y = abs(`m-f`)) + geom_hex(bins = 70) + scale_fill_gradient(low = "orange1", high = "goldenrod1") + ggtitle("Human: male all comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "none") #+ ylim(0, 0.45) + xlim(-0.3, 1.0)
 
-mouse_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Mouse: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.409; p = 0.006\nmale r = -0.653; p < 0.0001", family = "mono", color = "ivory4", size = 6) + ylim(0, 0.45) + xlim(-0.3, 1.0) + 
-  theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
+# mouse_signif <- mouse_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Mouse: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.409; p = 0.006\nmale r = -0.653; p < 0.0001", family = "mono", color = "ivory4", size = 6) + ylim(0, 0.45) + xlim(-0.3, 1.0) + 
+#   theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
+# 
+# human_signif <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Human: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.108; p = 0.293\nmale r = -0.219; p = 0.032", family = "mono", color = "ivory4", size = 6) + ylim(0.0, 0.45) + xlim(-0.3, 1.0) +
+#   theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
 
-human_signif <- human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% pivot_longer(cols = c("correlation_m", "correlation_f"), names_to = "sex", values_to = "correlation") %>% mutate(sex = ifelse(sex == "correlation_m", "m", "f")) %>% ggplot() + aes(x = correlation, y = abs(`m-f`), color = sex) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + ggtitle("Human: significant comparisons") + xlab("Pearson correlations") + ylab("Correlation sex difference\n(effect size)") + geom_text(x = 0.4, y = 0.05, label = "female r = -0.108; p = 0.293\nmale r = -0.219; p = 0.032", family = "mono", color = "ivory4", size = 6) + ylim(0.0, 0.45) + xlim(-0.3, 1.0) +
-  theme_bw() + theme(text = element_text(family = "mono", size = 15), legend.position = "bottom", legend.text = element_text(size = 15))
+p_values <- c(0, 0.5, 0.7, 0.8, 0.9, 1)
+
+mouse_signif <- bind_rows(lapply(1:5, function(x) find_es_cors(mouse_res_age_normalized_1, x))) %>%
+mutate(p_val = p.adjust(p_val, method = "bonferroni")) %>%
+mutate(signif_adj = ifelse(p_val < 0.05, "true", "false"),
+       sex = ifelse(sex == "correlation_m", "m", "f")) %>%
+ggplot() + aes(x = p_values_range, y = cor_coef, color = sex, group = sex) + 
+geom_line(alpha = 0.6) + geom_point(shape = 17, size = 5, alpha = 0.7) + 
+scale_color_manual(values = c("deepskyblue1", "goldenrod1"),
+                   guide = "none") + 
+theme_bw() +
+xlab("p-value threshold of covariance sex differences") + 
+ylab("Pearson r: correlation\nstrength and sex differences") + 
+ggtitle("Mouse: correlation strength vs.\nsex differences effect size") +  
+  theme(text = element_text(family = "mono", size = 15), 
+        legend.position = "bottom", legend.text = element_text(size = 15)) + ylim(-0.8, 0)
+
+human_signif <- bind_rows(lapply(1:5, function(x) find_es_cors(human_res_age_normalized_1, x))) %>%
+mutate(p_val = p.adjust(p_val, method = "bonferroni")) %>% 
+mutate(signif_adj = ifelse(p_val < 0.05, "true", "false"),
+       sex = ifelse(sex == "correlation_m", "m", "f")) %>%
+ggplot() + aes(x = p_values_range, y = cor_coef, color = sex, group = sex,
+               shape = factor(signif_adj)) + 
+  geom_line(alpha = 0.6) + geom_point(size = 5, alpha = 0.7) + 
+  scale_color_manual(values = c("deepskyblue1", "goldenrod1")) + 
+  scale_shape_manual(values = c(18,17), name = "p < 0.05") + 
+  theme_bw() +
+  xlab("p-value threshold of covariance sex differences") + 
+  ylab("Pearson r: correlation\nstrength and sex differences") + 
+  ggtitle("Human: correlation strength vs.\nsex differences effect size") +  
+  theme(text = element_text(family = "mono", size = 15), 
+        legend.position = "bottom", legend.text = element_text(size = 15)) + ylim(-0.8, 0)
 
 strength_vs_difference <- (mouse_f_all + human_f_all) / (mouse_m_all + human_m_all) / (mouse_signif + human_signif) +
   plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A', theme = theme(legend.position = "bottom"))
 
+# ggsave(plot = strength_vs_difference, 
+#        "figures/supplementary/strength_vs_difference.png", 
+#        width = 12, height = 15)
+
 ggsave(plot = strength_vs_difference, 
        "figures/supplementary/strength_vs_difference.png", 
-       width = 12, height = 15)
+       width = 15, height = 15)
 
 human_res_age_normalized_1 %>% filter(signif_adj == TRUE) %>% summarise(cor.test(correlation_m, abs(`m-f`))$estimate, cor.test(correlation_m, abs(`m-f`))$p.value)
 
